@@ -80,3 +80,45 @@ import { Button } from '@/components/button'
 - CLS : 방문자에게 콘텐츠가 얼마나 불안정한지 측정한 값
 
 
+### Next.js와 eslint.config.mjs
+```json
+{
+    "extends": "next",
+    "rules":{
+        "no-console":"warn"
+    }
+}
+```
+
+```js
+//eslint.config.mjs
+import next from 'eslint-config-next';
+
+export default[
+    next(),
+    {
+        rules:{
+            'no-console':'warn'
+        }
+    }
+];
+```
+
+### pnpm
+- 효율적인 npm의 약자로 고성능 node 패키지 매니저
+- 같은 목적의 패키지 관리자지만 디스크 공간 낭비, 복잡한 의존성 관리, 느린 설치 속도 문제 개선을 위해 개발
+
+##### 대표적인 특징
+1. 하드링크 기반의 효율적인 저장 공간사용
+    - 패키지를 한 번만 설치하여 글로벌 저장소에 저장하고 하드링크가 생성됨
+2. 빠른 패키지 설치속도
+    - 이미 설치된 패키지는 재사용, 종속성 설치 및 업데이트 때도 빠른 속도 경험
+3. 엄격하고 효율적인 종속성 관리
+4. 다른 패키지 매니저의 비효율성 개선
+
+### 하드링크 vs 심볼릭 링크
+
+- pnpm의 특징 중에 하드 링크를 사용해서 디스크 공간을 효율적으로 사용
+
+##### 하드링크란 = 원본파일
+
