@@ -1,6 +1,21 @@
 # Next.js
 # 202130133 최현기
 -----
+
+## 9월 10일 (3주차)
+
+- 원문에는 route 라는 단어가 자주 등장
+- route는 경로, routing은 경로를 찾는 과정
+- path도 경로이기 때문에 번역을 routing으로 함
+
+- firectory와 folder는 구분없이 나옴
+- 최상위는 directory 하위는 folder
+
+### 1.Folder and file conventions
+- 최상위 폴더는 애플리케이션의 코드와 정적 자산을 구성하는데 사용
+
+
+-----
 ## 9월 3일 (2주차)
 
 ### Installation
