@@ -1,4 +1,216 @@
-# 202130133 최현기
+<img width="612" height="393" alt="image" src="https://github.com/user-attachments/assets/1347c895-25ed-424a-9633-569e919a2f68" /># 202130133 최현기
+## 10/17 7주차
+
+## 🧩 2. Next.js에서 Server와 Client Component는 어떻게 작동합니까?
+
+### 🔹 2-1. Server Component의 작동
+
+- **Server**에서 Next.js는 **React의 API**를 사용하여 렌더링을 조정합니다.  
+- 렌더링 작업은 **개별 라우팅 세그먼트별 묶음(Chunk)** 으로 나뉩니다.  
+  *(예: `layout`, `page`)*
+
+✅ **Server Component**는  
+**RSC Payload (React Server Component Payload)** 라는 특수한 데이터를  
+**흘식으로 렌더링**합니다.  
+
+✅ **Client Component**와 **RSC Payload**는  
+**HTML을 미리 렌더링(prerender)** 하는 데 사용됩니다.
+
+---
+
+### ⚙️ React Server Component Payload (RSC)란 무엇인가요?
+
+- **RSC 페이로드**는 렌더링된 **React Server Component 트리의 압축된 바이너리 표현**입니다.  
+- **Client**에서는 React가 브라우저의 **DOM을 업데이트하는 데 사용**됩니다.
+
+---
+
+### 🧩 RSC (RSC Payload)는 JSON인가, 바이너리인가?
+
+#### 📜 과거 : JSON 기반
+- RSC 초기에는 **JSON 형식의 문자열**로 데이터를 전달했습니다.
+- 예: `{ type: "component", props: { title: "Hello" } }`
+
+---
+
+#### ⚙️ 현재 : 바이너리 형식으로 최적화
+- 최신 **React**, 특히 **Next.js App Router**는  
+  **RSC Payload**를 `compact binary format`으로 전송합니다.
+- **JSON이 아니라**, React 전용 이진 포맷으로  
+  **스트림(stream)** 을 통해 전달됩니다.
+- 이 방식은 **JSON보다 용량이 작고**, **빠르게 파싱**할 수 있습니다.
+
+### 💡 왜 JSON 대신 바이너리를 쓸까?
+
+---
+
+####⚙️ React는 컴포넌트 구조, props, 서버에서 생성된 UI 정보를  
+RSC 프로토콜로 정의하고, 이를 전송하는 것에 특화된 이진 형식을 사용합니다.
+
+---
+
+#### 🧠 어떻게 이진이 브라우저에서 처리될까?
+
+- **React가 server에서 만든 UI 트리를**  
+  **바이너리 스트림으로 client에 전달**합니다.  
+- **Client 측 React**는 이를 해석해 **UI를 재구성**합니다.  
+- **Next.js**는 이 작업을 자동으로 처리하기 때문에  
+  **개발자는 신경 쓰지 않아도 됩니다.**
+
+
+### 🧩 2-2. Client Component의 작동 (첫 번째 Load)
+
+1. **HTML**은 사용자에게 경로의 비대화형 **미리보기**를 즉시 보여주는 데 사용됩니다.  
+2. **RSC 페이로드**는 **client와 server component 트리**를 조정하는 데 사용됩니다.  
+3. **JavaScript**는 **client component를 hydration**하고,  
+   애플리케이션을 **대화형(interactive)** 으로 만드는 데 사용됩니다.
+
+---
+
+##### 💧 Hydration이란 무엇인가?
+
+- **Hydration**은 **이벤트 핸들러를 DOM에 연결**하여  
+  정적 **HTML을 인터랙티브하게 만드는 React의 프로세스**입니다.
+
+## 🧩 3. Example
+
+### 3-1. Client Component 사용
+
+- 파일의 맨 위, 즉 **import문 위에 `"use client"` 지시문**을 추가하여  
+  **client component**를 생성할 수 있습니다.
+
+- `"use client"`는 **server와 client 모듈 트리 사이의 경계**를 선언하는 데 사용됩니다.
+
+- 파일에 `"use client"`로 표시되면 해당 파일의 **모든 import와 자식 component는  
+  client 번들의 일부로 간주**됩니다.
+
+- 즉, **client를 대상으로 하는 모든 component에 이 지시문을 추가할 필요가 없습니다.**
+
+
+
+### 🧩 3-1. Client Component 사용 #실습
+
+- 문서의 코드는 `/app/ui/counter.tsx`를 작성했지만,  
+  `src` 디렉토리를 사용하는 경우는 다음과 같이 관리하는 것이 일반적입니다.
+
+  - `src/app/` 아래에는 **라우팅 페이지**만 작성하고 관리합니다.  
+  - 기타 사용자 정의 **component나 library**는 `src/` 아래에 작성하고 관리합니다.
+
+---
+
+### 💻 [실습1]  
+따라서 이번 실습 코드는 `src/components` 디렉토리를 만들고  
+`Counter` 컴포넌트를 작성합니다.
+
+```tsx
+// src/components/Counter.tsx
+'use client'
+
+import { useState } from 'react'
+
+export default function Counter() {
+  const [count, setCount] = useState(0)
+
+  return (
+    <div>
+      {count} likes
+      <button onClick={() => setCount(count + 1)}>Click me</button>
+    </div>
+  )
+}
+```
+
+---
+
+### 🧩 3-2. JS Bundle 크기 줄이기
+
+- **Client JavaScript 번들의 크기를 줄이려면**,  
+  UI의 큰 부분을 **client component**로 표시하는 대신,  
+  특정 대화형 component에만 `"use client"`를 추가합니다.
+
+---
+
+- 예를 들어, 다음 예제의 `<Layout>` component는  
+  로고와 탐색 링크와 같은 정적 요소가 대부분이지만  
+  **대화형 검색창이 포함되어 있습니다.**
+
+- `<Search />`는 대화형이기 때문에 **client component**가 되어야 하지만,  
+  나머지 layout은 **server component**로 유지될 수 있습니다.
+
+---
+
+> 🔹 **나머지 layout은 server component로 유지해야 합니다!**
+---
+
+
+`<Search />`는 **사용자와의 상호작용이 바로 이루어질 가능성**이 있기 때문에  
+**Client Component**로 사용하고,  
+`<Logo />`는 상대적으로 중요하지 않고 **이미지 등 용량이 크기 때문에**  
+**Server Component**로 사용하는 것이 좋습니다.
+
+---
+
+#### 📁 app/ui/layout.tsx
+```tsx
+// Client Component
+import Search from './search'
+
+// Server Component
+import Logo from './logo'
+
+// Layout is a Server Component by default
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <main>
+      <Logo />
+      <Search />
+      <div>{children}</div>
+    </main>
+  )
+}
+```
+
+---
+
+#### 📁 app/ui/search.tsx
+```tsx
+'use client'
+
+export default function Search() {
+  return (
+    // ...
+  )
+}
+```
+
+### 🧩 3-3. Server에서 Client Component로 데이터 전달
+
+- 다른 방법으로는 **use Hook**을 사용하여  
+  **server component에서 client component로 데이터를 스트리밍**할 수도 있습니다.  
+  → 예제를 참고하세요. (*Fetching Data에서 소개합니다.*)
+
+---
+
+💡 **알아두면 좋은 정보**  
+> client component에 전달되는 Props는 React에서 **직렬화(serialization)** 가 가능해야 합니다.
+
+---
+
+### 📦 직렬화(Serialization)란 무엇인가?
+
+- 일반적으로는 **메모리에 있는 복잡한 데이터를 바이트의 연속 형태로 변환하는 과정**을 말합니다.
+
+- 즉, 자바스크립트의 객체나 배열처럼 구조가 있는 데이터를  
+  파일로 저장하거나, 네트워크로 전송하기 쉽게 만드는 과정입니다.
+
+---
+
+- **React나 Next.js** 같은 프레임워크는  
+  컴포넌트의 상태나 트리 구조를 서버에서 **직렬화하여 클라이언트로 전송**하고,  
+  클라이언트에서는 **역직렬화**하는 과정을 자주 수행합니다.
+
+
+
 ## 10/1 6주차
 
 ### 1-4. Client-side transitions (클라이언트 측 전환)
