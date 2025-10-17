@@ -1,4 +1,4 @@
-<img width="612" height="393" alt="image" src="https://github.com/user-attachments/assets/1347c895-25ed-424a-9633-569e919a2f68" /># 202130133 최현기
+# 202130133 최현기
 ## 10/17 7주차
 
 ## 🧩 2. Next.js에서 Server와 Client Component는 어떻게 작동합니까?
