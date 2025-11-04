@@ -1,4 +1,47 @@
 # 202130133 최현기
+# 10월 29일 수업내용(10주차)
+## 캐시 구성 요소
+
+**캐시 구성 요소**는 Next.js에서 렌더링 및 캐싱을 위한 새로운 접근 방식으로, **캐시되는 내용과 시기**를 세부적으로 제어하는 동시에 **부분 사전 렌더링(PPR)** 을 통해 뛰어난 사용자 경험을 보장합니다.
+
+## 캐시 구성 요소
+
+동적 애플리케이션을 개발할 때는 두 가지 주요 접근 방식의 균형을 맞춰야 합니다.
+
+- **완전히 정적인 페이지**는 빠르게 로드되지만 개인화된 데이터나 실시간 데이터를 표시할 수 없습니다.
+- **완전히 동적인 페이지**는 최신 데이터를 표시할 수 있지만 각 요청에서 모든 것을 렌더링해야 하므로 초기 로드 속도가 느려집니다.
+
+캐시 구성 요소를 활성화하면 Next.js는 기본적으로 **모든 경로를 동적**으로 처리합니다. 모든 요청은 사용 가능한 최신 데이터로 렌더링됩니다. 그러나 대부분의 페이지는 정적 요소와 동적 요소로 구성되므로 **모든 요청에서 모든 동적 데이터를 소스에서 확인할 필요는 없습니다.**
+
+캐시 구성 요소를 사용하면 **데이터와 UI의 일부**까지 캐시 가능한 것으로 표시할 수 있으며, **페이지의 정적 부분과 함께 사전 렌더링 단계**에 포함됩니다.
+
+## 작동 원리
+
+### 1. 런타임 데이터에 대한 서스펜스
+
+일부 데이터는 실제 사용자가 요청할 때 **런타임에만 사용할 수 있습니다**. `cookies`, `headers`, 와 같은 API는 `searchParams` 요청별 정보에 접근합니다. 이러한 API를 사용하여 구성 요소를 `Suspense` 경계로 감싸면 **나머지 페이지는 정적 셸로 미리 렌더링**될 수 있습니다.
+
+**런타임 API는 다음과 같습니다.**
+
+- `cookies`
+- `headers`
+- `searchParams` 소품
+- `params` prop — 단, `generateStaticParams` 를 통해 하나 이상의 예시 값을 제공하지 않는 한 **런타임 데이터**입니다. 제공된 경우, 해당 매개변수 값은 **사전 렌더링된 경로에 대해 정적으로 처리**되지만 **다른 값은 런타임 데이터**로 유지됩니다.
+### 2. 동적 데이터에 대한 서스펜스
+
+`fetch` 호출이나 데이터베이스 쿼리(`db.query(...)`) 와 같은 **동적 데이터**는 요청 간에 변경될 수 있지만 사용자별로 달라지지는 않습니다. `connection` API는 메타 동적입니다. 즉, 반환할 실제 데이터가 없더라도 사용자 탐색을 기다리는 것을 의미합니다. **스트리밍을 활성화하려면** 이러한 데이터를 사용하는 구성 요소를 `Suspense` 경계로 래핑합니다.
+
+### 3. 캐시된 데이터
+
+모든 서버 구성 요소에 추가하여 **`'use cache'`** 캐시하고 사전 렌더링된 셸에 포함합니다. **캐시된 구성 요소 내부에서는 런타임 API를 사용할 수 없습니다.** 유틸리티 함수를 **`use cache`** 로 표시하고 서버 구성 요소에서 호출할 수도 있습니다.
+
+```ts
+export async function getProducts() {
+  'use cache'
+  const data = await db.query('SELECT * FROM products')
+  return data
+}
+```
 
 # 10월 22일 수업내용 (9주차)
 ## 3-4. server 및 client component 인터리빙
@@ -11,9 +54,11 @@
 - 'use client'
 
 ### Modal 예시
+```
 export default function Modal({ children }: { children: React.ReactNode }) {
   return <div>{children}</div>
 }
+```
 
 ## 3-4. server 및 client component 인터리빙
 - 예를 들어, client의 state를 사용하여 표시 여부를 전환(toggle)하는 component 안에 server에서 데이터를 가져오는 component가 있습니다.
@@ -21,6 +66,7 @@ export default function Modal({ children }: { children: React.ReactNode }) {
 - Modal을 불러오는 곳이 Page이기 때문에 Page가 parent가 되는 것입니다.
 
 ### Page 예시
+```
 import Modal from './ui/modal'
 import Cart from './ui/cart'
 
@@ -31,6 +77,7 @@ export default function Page() {
    </Modal>
  )
 }
+```
 
 - 이 패턴에서는 모든 server component(props 포함)가 server에서 미리 렌더링됩니다.
 - 생성된 RSC 페이로드에는 component 트리 내에서 client component가 렌더링되어야 하는 위치에 대한 참조가 포함됩니다.
@@ -53,6 +100,8 @@ export default function Page() {
 - #먼저 ClientLayout.tsx 컴포넌트를 다음과 같이 구성합니다.
 
 ### ClientLayout.tsx
+
+```
 // @/components/ClientLayout.tsx (Client Component)
 'use client';
 
@@ -66,12 +115,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     </div>
   );
 }
+```
 
 ## server 및 client component interleaving 실습
 - #다음으로 ServerContent.tsx 컴포넌트를 다음과 같이 구성합니다.
 - #여기서 사용한 jsonplaceholder.typicode.com은 아주 유용한 사이트 입니다.
 
 ### ServerContent.tsx
+```
 // @/components/ServerContent.tsx (Server Component)
 
 export default async function ServerContent() {
@@ -80,6 +131,7 @@ export default async function ServerContent() {
     <p>서버에서 가져온 제목: {data.title}</p>
   );
 }
+```
 
 - 이제 interleaving 패턴을 사용할 라우팅 페이지를 직접 구성해 보세요.
 
@@ -90,6 +142,7 @@ export default async function ServerContent() {
 
 ## server 및 client component interleaving 실습
 ### interleaved/page.tsx
+```
 // interleaved/page.tsx (Server Component)
 
 import ClientLayout from '@/components/ClientLayout';
@@ -102,6 +155,7 @@ export default function Page() {
     </ClientLayout>
   );
 }
+```
 
 ### 동작 과정을 살펴보면
 - Next.js는 먼저 ServerContent를 서버에서 렌더링 -> HTML로 변환
@@ -110,7 +164,7 @@ export default function Page() {
 - 결국 서버 데이터는 이미 들어와 있고, 버튼이나 이벤트 등은 클라이언트 컴포넌트에서 처리가 가능해 집니다.
 - ➡️ 이렇게 둘이 섞여(interleaved) 있는 패턴이 되는 것입니다
 
-# Context란 무엇인가?
+## Context란 무엇인가?
 - #다음 절은 3-5. Context provider 입니다.
 - #React에서도 나온 개념이지만, 문서를 보기 전에 먼저 context에 대해서 알아 보겠습니다.
 - #Next.js에서 Context는 React의 Context API를 사용하여 컴포넌트 사이에 데이터를 공유하는 메커니즘을 의미합니다.
@@ -132,6 +186,7 @@ export default function Page() {
 - #다음은 설명을 위한 예시이며, 실습은 뒤에서 합니다.
 
 ### 예시 코드
+```
 // Context 생성
 const MyContext = React.createContext();
 
@@ -146,6 +201,7 @@ function App() {
     </MyContext.Provider>
   );
 }
+```
 
 ## Context란 무엇인가?
 ### [ 추가 정보 ]
@@ -160,6 +216,7 @@ function App() {
 - 그러나 server component에서는 React Context가 지원되지 않습니다.
 - Context를 사용하려면 children을 허용하는 client component를 만들어야 합니다.
 
+```
 ### app/theme-provider.js
 // app/theme-provider.js
 'use client';
@@ -171,6 +228,7 @@ export const ThemeContext = createContext({});
 export default function ThemeProvider({ children }) {
   return <ThemeContext.Provider value="dark">{children}</ThemeContext.Provider>;
 }
+```
 
 - #문서에서 설명하는 예제에 오류는 없으나, 육안으로 변화를 느낄 수 없기 때문에 별도의 예제를 통해 확인해 보도록 하겠습니다.
 
@@ -178,6 +236,7 @@ export default function ThemeProvider({ children }) {
 - 그 다음 server component로 가져옵니다. (예. Layout)
 
 ### app/layout.tsx
+```
 // app/layout.tsx
 
 import ThemeProvider from './theme-provider';
@@ -195,6 +254,7 @@ export default function RootLayout({
     </html>
   );
 }
+```
 
 - 이제 server component에서 Provider component를 직접 감싸서 렌더링할 수 있으며, 앱 전체에 있는 모든 client component가 이 Context를 사용할 수 있습니다.
 
@@ -216,6 +276,7 @@ export default function RootLayout({
 - 다음은 theme-provider.tsx 파일에 추가/수정된 부분입니다.
 
 ### theme-provider.tsx
+```
 // src > components > theme-provider.tsx > ThemeProvider
 'use client'
 
@@ -249,11 +310,13 @@ export default function ThemeProvider({
     </ThemeContext.Provider>
   )
 }
+```
 
 ## Context provider 실습
 - #다음은 새로 생성한 theme-status.tsx의 내용입니다.
 
 ### theme-status.tsx
+```
 // src > components > theme-status.tsx > ThemeStatus
 'use client'
 
@@ -270,11 +333,13 @@ export default function ThemeStatus() {
     </div>
   )
 }
+```
 
 ## Context provider 실습
 - #다음은 RootLayout의 추가/수정 사항입니다.
 
 ### layout.tsx
+```
 // src > app > layout.tsx > ...
 import Link from 'next/link';
 import ThemeProvider from '@/components/theme-provider';
@@ -311,6 +376,7 @@ export default function RootLayout({
     </html>
   );
 }
+```
 
 # Context provider 실습 코드 설명
 ## Context 생성 코드 설명 (theme-provider.tsx) - client 컴포넌트
@@ -326,6 +392,7 @@ export default function RootLayout({
 - 실제 동작은 ThemeProvider 컴포넌트에서 설정하게 됩니다.
 
 ### 타입 선언 코드
+```
 export const ThemeContext = createContext<{
   theme: 'light' | 'dark',
   toggleTheme: () => void
@@ -333,6 +400,7 @@ export const ThemeContext = createContext<{
   theme: 'light',
   toggleTheme: () => {},
 })
+```
 
 ## Context provider 실습 코드 설명
 ### Context 생성 코드 설명 (theme-provider.tsx)
@@ -349,11 +417,13 @@ export const ThemeContext = createContext<{
 - #useEffect Hook은 컴포넌트가 렌더링된 후 부수 효과(side effect)를 실행하기 위한 함수입니다.
 
 ### useEffect 코드
+```
 useEffect(() => {
   if (typeof window !== 'undefined') {
     document.documentElement.dataset.theme = theme
   }
 }, [theme])
+```
 
 - if문의 조건절은 "현재 실행 환경이 브라우저인지 확인"하는 부분입니다. Line21
 - 서버 사이드 렌더링(SSR) 단계에서는 window 객체가 없습니다.
@@ -373,6 +443,7 @@ useEffect(() => {
 - #이 방법을 사용할 경우 CSS에서 속성을 조건으로 스타일을 다르게 지정할 수 있습니다.
 
 ### CSS 예시
+```
 useEffect(() => {
   if (typeof window !== 'undefined') {
     document.documentElement.dataset.theme = theme
@@ -388,20 +459,23 @@ html[data-theme='dark'] {
   color: white;
 }
 
+```
 ## Context provider 실습 코드 설명
 - 여기서 html[data-theme='light']는 속성 선택자(Attribute Selector)로 CSS에서 클래스(.class)나 아이디(#id)처럼 요소를 선택하는 또 다른 방법 입니다.
 - 속성 선택자는 class를 여러 개 붙이는 경우보다 스타일 충돌을 줄일 수 있습니다.
 - css를 적용하려면 코드를 어떻게 수정하면 좋을까요?
 - 직접 작성해 보세요!
-- html[data-theme='light'] {
+```
+html[data-theme='light'] {
   background-color: white;
   color: black;
 }
 
-- html[data-theme='dark'] {
+html[data-theme='dark'] {
   background-color: black;
   color: white;
 }
+```
 
 ## Context provider 실습 코드 설명
 - theme state를 3항 연산자를 사용해서 토글하여 setTheme함수를 이용해서, toggleTheme에 저장합니다. Line26
@@ -426,6 +500,7 @@ html[data-theme='dark'] {
 - 클릭 이벤트가 발생하면 추출된 toggleTheme함수를 실행하고, 버튼 내의 삼항 연산자를 사용하여 버튼의 모양을 교체해 줍니다. Line10 ~ Line11
 
 ### theme-status.tsx
+```
 // src > components > theme-status.tsx > ThemeStatus
 'use client'
 
@@ -442,6 +517,7 @@ export default function ThemeStatus() {
     </div>
   )
 }
+```
 
 - aria-label 속성: 텍스트가 없거나 불분명할 때, 화면 낭독기 등 보조 기술이 버튼의 역할을 설명하도록 접근성 이름을 제공합니다.
 - aria : Accessible Rich Internet Applications(접근 가능한 풍부한 인터넷 애플리케이션)의 약자
