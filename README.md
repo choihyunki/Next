@@ -1,4 +1,66 @@
 # 202130133 최현기
+
+# app/routers/geminitest.py
+import os
+from fastapi import APIRouter, Body
+import google.generativeai as genai
+
+router = APIRouter(prefix="/api", tags=["GeminiTest"])
+
+def _get_model():
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise RuntimeError("환경변수 GOOGLE_API_KEY 가 설정되어 있지 않습니다.")
+    genai.configure(api_key=api_key)
+
+    # 우선순위: GEMINI_TEST_MODEL > GEMINI_FAST_MODELS > 기본값
+    model_id = (
+        os.getenv("GEMINI_TEST_MODEL")
+        or os.getenv("GEMINI_FAST_MODELS", "gemini-2.5-flash")
+    ).split(",")[0].strip()
+
+    return genai.GenerativeModel(model_id), model_id
+
+@router.get("/geminitest")
+async def geminitest_ping():
+    return {"ok": True, "message": "POST /api/geminitest 로 {prompt}를 보내면 응답을 돌려줍니다."}
+
+@router.post("/geminitest")
+async def geminitest(payload: dict = Body(...)):
+    """
+    Body 예시: { "prompt": "한 줄 소개 만들어줘" }
+    """
+    prompt = str(payload.get("prompt") or "Hello from 자세ON! 간단히 답해주세요.")
+    try:
+        model, model_id = _get_model()
+        resp = model.generate_content(prompt)
+
+        # SDK 버전에 따라 usage 메타데이터 필드명이 다를 수 있어 안전하게 접근
+        usage = getattr(resp, "usage_metadata", None) or getattr(resp, "usage", None)
+
+        # 텍스트 추출 (일부 버전 호환)
+        if hasattr(resp, "text") and resp.text:
+            text = resp.text
+        elif getattr(resp, "candidates", None):
+            parts = resp.candidates[0].content.parts
+            text = "".join(getattr(p, "text", "") for p in parts)
+        else:
+            text = ""
+
+        return {
+            "ok": True,
+            "model": model_id,
+            "prompt": prompt,
+            "output": text,
+            "tokens": {
+                "input": getattr(usage, "prompt_token_count", None),
+                "output": getattr(usage, "candidates_token_count", None),
+                "total": getattr(usage, "total_token_count", None),
+            },
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
 # 10월 29일 수업내용(10주차)
 ## 캐시 구성 요소
 
